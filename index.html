@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>2026世界杯淘汰赛预测器 SVG国旗版</title>
+<style>
+  :root{
+    --bg:#f3f6fb;
+    --card:#ffffff;
+    --text:#182233;
+    --muted:#6b7280;
+    --line:#d8e0eb;
+    --accent:#2563eb;
+    --green:#dcfce7;
+    --green-line:#22c55e;
+    --gold:#f59e0b;
+    --shadow:0 10px 28px rgba(15,23,42,.08);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:linear-gradient(180deg,#eef4ff 0%,#f8fafc 100%);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial,sans-serif;
+  }
+  .page{max-width:1480px;margin:0 auto;padding:22px;}
+  .topbar{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);
+    padding:16px 18px;margin-bottom:18px;
+  }
+  h1{margin:0 0 6px;font-size:28px;letter-spacing:.2px;}
+  .desc{color:var(--muted);font-size:14px;margin-bottom:14px;line-height:1.6;}
+  .controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px;}
+  .controls label{font-size:14px;color:#374151;}
+  .controls input[type="text"]{height:38px;border:1px solid var(--line);border-radius:10px;padding:0 12px;min-width:180px;font-size:14px;}
+  .btn{height:38px;border:0;border-radius:10px;padding:0 14px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer;}
+  .btn.secondary{background:#e5e7eb;color:#111827;}
+  .btn.ghost{background:#fff;color:#111827;border:1px solid var(--line);}
+  .btn:active{transform:translateY(1px);}
+  .board-wrap{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:18px;overflow:auto;}
+  .title-line{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:10px;min-width:1540px;}
+  .main-title{font-size:22px;font-weight:900;}
+  .name-title{color:var(--muted);font-size:14px;}
+  #board{
+    position:relative;
+    width:1540px;
+    height:1600px;
+    background:radial-gradient(circle at top left,#ffffff 0,#f8fbff 56%,#f7fafc 100%);
+    border:1px solid #e5eaf2;
+    border-radius:16px;
+    overflow:hidden;
+  }
+  .round-title{position:absolute;top:20px;width:180px;text-align:center;font-size:14px;font-weight:900;color:#334155;}
+  .half-label{position:absolute;left:18px;color:#64748b;font-size:13px;font-weight:900;letter-spacing:2px;writing-mode:vertical-rl;}
+  .half-line{position:absolute;left:16px;right:16px;height:1px;background:#dbe3ee;}
+  svg.lines{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+  .match{
+    position:absolute;width:180px;min-height:64px;background:#fff;border:1px solid var(--line);border-radius:12px;
+    box-shadow:0 4px 12px rgba(15,23,42,.05);padding:6px;z-index:2;
+  }
+  .match-label{font-size:10px;color:#64748b;font-weight:800;margin:0 0 4px 2px;}
+  .team{
+    width:100%;height:25px;display:flex;align-items:center;gap:6px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;
+    margin-top:4px;padding:0 7px;cursor:pointer;text-align:left;font-size:13px;color:#111827;
+  }
+  .team:hover{border-color:#93c5fd;background:#eff6ff;}
+  .team.selected{background:var(--green);border-color:var(--green-line);font-weight:900;}
+  .team.disabled{cursor:default;background:#f8fafc;color:#94a3b8;}
+  .flag-svg{width:24px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:2px;overflow:hidden;box-shadow:0 0 0 1px rgba(15,23,42,.12);background:#fff;}
+  .flag-svg svg{width:24px;height:16px;display:block;}
+  .flag-placeholder{width:24px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#94a3b8;}
+  .team-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .champion{
+    position:absolute;width:190px;min-height:100px;background:#fffbeb;border:2px dashed var(--gold);border-radius:16px;box-shadow:0 6px 18px rgba(245,158,11,.16);
+    z-index:2;text-align:center;padding:14px 10px;
+  }
+  .champion .small{font-size:12px;color:#92400e;font-weight:900;margin-bottom:8px;}
+  .champion .big{font-size:19px;color:#92400e;font-weight:900;line-height:1.45;word-break:break-word;}
+  .champion .flag-svg{width:42px;height:28px;margin:0 auto 4px;}
+  .champion .flag-svg svg{width:42px;height:28px;}
+  .footer-note{margin-top:10px;color:var(--muted);font-size:12px;min-width:1540px;}
+  .hidden{display:none!important;}
+  @media (max-width:800px){.page{padding:12px}.topbar{padding:14px}h1{font-size:22px}.board-wrap{padding:12px}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="topbar">
+    <h1>2026世界杯淘汰赛预测器</h1>
+    <div class="controls">
+      <label>预测人：<input id="predictorName" type="text" placeholder="张三" /></label>
+      <button class="btn" id="exportBtn">导出PNG图片</button>
+      <button class="btn secondary" id="saveBtn">保存</button>
+      <button class="btn secondary" id="loadBtn">读取</button>
+      <button class="btn ghost" id="resetBtn">重置预测</button>
+      <button class="btn ghost" id="jsonBtn">导出JSON</button>
+      <label class="btn ghost" style="display:inline-flex;align-items:center;cursor:pointer;">
+        导入JSON
+        <input id="jsonInput" type="file" accept="application/json" class="hidden" />
+      </label>
+    </div>
+  </div>
+
+  <div class="board-wrap">
+    <div class="title-line">
+      <div class="main-title">2026世界杯淘汰赛预测图</div>
+      <div class="name-title">预测人：<span id="previewName">张三</span></div>
+    </div>
+    <div id="board">
+      <svg class="lines" id="lines"></svg>
+      <div class="half-label" style="top:120px;">上半区</div>
+      <div class="half-line" style="top:800px;"></div>
+      <div class="half-label" style="top:930px;">下半区</div>
+    </div>
+  </div>
+  <canvas id="canvas" class="hidden"></canvas>
+</div>
+
+<script>
+const STORAGE_KEY = 'wc2026_cn_flags_v4_svg';
+const TEAM = {
+  can:{cn:'加拿大', flag:'🇨🇦'}, rsa:{cn:'南非', flag:'🇿🇦'}, ger:{cn:'德国', flag:'🇩🇪'}, par:{cn:'巴拉圭', flag:'🇵🇾'},
+  ned:{cn:'荷兰', flag:'🇳🇱'}, mar:{cn:'摩洛哥', flag:'🇲🇦'}, bra:{cn:'巴西', flag:'🇧🇷'}, jpn:{cn:'日本', flag:'🇯🇵'},
+  fra:{cn:'法国', flag:'🇫🇷'}, swe:{cn:'瑞典', flag:'🇸🇪'}, civ:{cn:'科特迪瓦', flag:'🇨🇮'}, nor:{cn:'挪威', flag:'🇳🇴'},
+  mex:{cn:'墨西哥', flag:'🇲🇽'}, ecu:{cn:'厄瓜多尔', flag:'🇪🇨'}, eng:{cn:'英格兰', flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'}, cod:{cn:'刚果民主共和国', flag:'🇨🇩'},
+  bel:{cn:'比利时', flag:'🇧🇪'}, sen:{cn:'塞内加尔', flag:'🇸🇳'}, usa:{cn:'美国', flag:'🇺🇸'}, bih:{cn:'波黑', flag:'🇧🇦'},
+  esp:{cn:'西班牙', flag:'🇪🇸'}, aut:{cn:'奥地利', flag:'🇦🇹'}, por:{cn:'葡萄牙', flag:'🇵🇹'}, cro:{cn:'克罗地亚', flag:'🇭🇷'},
+  sui:{cn:'瑞士', flag:'🇨🇭'}, dza:{cn:'阿尔及利亚', flag:'🇩🇿'}, aus:{cn:'澳大利亚', flag:'🇦🇺'}, egy:{cn:'埃及', flag:'🇪🇬'},
+  arg:{cn:'阿根廷', flag:'🇦🇷'}, cpv:{cn:'佛得角', flag:'🇨🇻'}, col:{cn:'哥伦比亚', flag:'🇨🇴'}, gha:{cn:'加纳', flag:'🇬🇭'}
+};
+
+const FLAG_SVG = {
+  can:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="24" fill="#fff"/><rect width="8" height="24" fill="#e21b2d"/><rect x="28" width="8" height="24" fill="#e21b2d"/><path d="M18 5l1.4 3.2 3.4-1.2-1.3 3.4 3.2 1.3-3.5 1.1 1.2 3.4-3-1.7-.5 4h-1.8l-.5-4-3 1.7 1.2-3.4-3.5-1.1 3.2-1.3L13.2 7l3.4 1.2z" fill="#e21b2d"/></svg>`,
+  rsa:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="12" fill="#de3831"/><rect y="12" width="36" height="12" fill="#002395"/><path d="M0 0l18 12L0 24z" fill="#ffb612"/><path d="M0 3l14 9L0 21z" fill="#007a4d"/><path d="M0 5l11 7L0 19z" fill="#000"/></svg>`,
+  ger:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="8" fill="#000"/><rect y="8" width="36" height="8" fill="#dd0000"/><rect y="16" width="36" height="8" fill="#ffce00"/></svg>`,
+  par:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="8" fill="#d52b1e"/><rect y="8" width="36" height="8" fill="#fff"/><rect y="16" width="36" height="8" fill="#0038a8"/></svg>`,
+  ned:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="8" fill="#ae1c28"/><rect y="8" width="36" height="8" fill="#fff"/><rect y="16" width="36" height="8" fill="#21468b"/></svg>`,
+  mar:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="24" fill="#c1272d"/><path d="M18 6l1.5 4.5h4.7l-3.8 2.8 1.4 4.5-3.8-2.7-3.8 2.7 1.4-4.5-3.8-2.8h4.7z" fill="none" stroke="#006233" stroke-width="1.4"/></svg>`,
+  bra:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="24" fill="#009b3a"/><path d="M18 3l15 9-15 9-15-9z" fill="#ffdf00"/><circle cx="18" cy="12" r="5.2" fill="#002776"/><path d="M13 11c4-1 7-.5 10 2" stroke="#fff" stroke-width="1" fill="none"/></svg>`,
+  jpn:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="24" fill="#fff"/><circle cx="18" cy="12" r="6" fill="#bc002d"/></svg>`,
+  fra:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="12" height="24" fill="#002395"/><rect x="12" width="12" height="24" fill="#fff"/><rect x="24" width="12" height="24" fill="#ed2939"/></svg>`,
+  swe:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="24" fill="#006aa7"/><rect x="10" width="4" height="24" fill="#fecc00"/><rect y="10" width="36" height="4" fill="#fecc00"/></svg>`,
+  civ:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="12" height="24" fill="#f77f00"/><rect x="12" width="12" height="24" fill="#fff"/><rect x="24" width="12" height="24" fill="#009e60"/></svg>`,
+  nor:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="24" fill="#ba0c2f"/><rect x="10" width="6" height="24" fill="#fff"/><rect y="9" width="36" height="6" fill="#fff"/><rect x="12" width="2.5" height="24" fill="#00205b"/><rect y="10.75" width="36" height="2.5" fill="#00205b"/></svg>`,
+  mex:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="12" height="24" fill="#006847"/><rect x="12" width="12" height="24" fill="#fff"/><rect x="24" width="12" height="24" fill="#ce1126"/><circle cx="18" cy="12" r="2.3" fill="#9c6b30"/></svg>`,
+  ecu:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="12" fill="#ffdd00"/><rect y="12" width="36" height="6" fill="#034ea2"/><rect y="18" width="36" height="6" fill="#ed1c24"/><circle cx="18" cy="12" r="2.2" fill="#8b5e3c"/></svg>`,
+  eng:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="24" fill="#fff"/><rect x="15" width="6" height="24" fill="#cf142b"/><rect y="9" width="36" height="6" fill="#cf142b"/></svg>`,
+  cod:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="24" fill="#007fff"/><path d="M-2 24L36 -2" stroke="#ce1021" stroke-width="7"/><path d="M-2 24L36 -2" stroke="#f7d618" stroke-width="10" opacity=".9"/><path d="M-2 24L36 -2" stroke="#ce1021" stroke-width="5"/><path d="M7 4l1.2 3.5h3.7L8.9 9.7l1.2 3.5L7 11 3.9 13.2l1.2-3.5L2.1 7.5h3.7z" fill="#f7d618"/></svg>`,
+  bel:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="12" height="24" fill="#000"/><rect x="12" width="12" height="24" fill="#ffd90c"/><rect x="24" width="12" height="24" fill="#ef3340"/></svg>`,
+  sen:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="12" height="24" fill="#00853f"/><rect x="12" width="12" height="24" fill="#fdef42"/><rect x="24" width="12" height="24" fill="#e31b23"/><path d="M18 7l1.2 3.5h3.6l-2.9 2.1 1.1 3.4-3-2.1-3 2.1 1.1-3.4-2.9-2.1h3.6z" fill="#00853f"/></svg>`,
+  usa:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="24" fill="#fff"/><g fill="#b22234"><rect y="0" width="36" height="2"/><rect y="4" width="36" height="2"/><rect y="8" width="36" height="2"/><rect y="12" width="36" height="2"/><rect y="16" width="36" height="2"/><rect y="20" width="36" height="2"/></g><rect width="16" height="11" fill="#3c3b6e"/><g fill="#fff"><circle cx="3" cy="3" r=".6"/><circle cx="7" cy="3" r=".6"/><circle cx="11" cy="3" r=".6"/><circle cx="5" cy="6" r=".6"/><circle cx="9" cy="6" r=".6"/><circle cx="13" cy="6" r=".6"/></g></svg>`,
+  bih:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="24" fill="#002395"/><path d="M14 0l14 24h8V0z" fill="#fecb00"/><g fill="#fff"><circle cx="9" cy="3" r="1"/><circle cx="12" cy="7" r="1"/><circle cx="15" cy="11" r="1"/><circle cx="18" cy="15" r="1"/><circle cx="21" cy="19" r="1"/></g></svg>`,
+  esp:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="6" fill="#aa151b"/><rect y="6" width="36" height="12" fill="#f1bf00"/><rect y="18" width="36" height="6" fill="#aa151b"/><rect x="9" y="9" width="3" height="5" fill="#aa151b"/></svg>`,
+  aut:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="8" fill="#ed2939"/><rect y="8" width="36" height="8" fill="#fff"/><rect y="16" width="36" height="8" fill="#ed2939"/></svg>`,
+  por:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="15" height="24" fill="#006600"/><rect x="15" width="21" height="24" fill="#ff0000"/><circle cx="15" cy="12" r="3" fill="#ffcc00"/></svg>`,
+  cro:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="8" fill="#f00"/><rect y="8" width="36" height="8" fill="#fff"/><rect y="16" width="36" height="8" fill="#171796"/><g transform="translate(14 7) scale(.9)"><rect width="8" height="8" fill="#fff"/><rect width="4" height="4" fill="#f00"/><rect x="4" y="4" width="4" height="4" fill="#f00"/></g></svg>`,
+  sui:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="24" fill="#d52b1e"/><rect x="15" y="5" width="6" height="14" fill="#fff"/><rect x="11" y="9" width="14" height="6" fill="#fff"/></svg>`,
+  dza:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="18" height="24" fill="#006233"/><rect x="18" width="18" height="24" fill="#fff"/><path d="M20 7a5 5 0 1 0 0 10 4 4 0 1 1 0-10" fill="#d21034"/><path d="M23 9l1 2.5 2.7.1-2.1 1.7.8 2.6-2.3-1.5-2.2 1.6.7-2.7-2.2-1.6 2.7-.1z" fill="#d21034"/></svg>`,
+  aus:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="24" fill="#00008b"/><rect width="16" height="10" fill="#012169"/><path d="M0 0l16 10M16 0L0 10" stroke="#fff" stroke-width="2"/><path d="M8 0v10M0 5h16" stroke="#fff" stroke-width="3"/><path d="M8 0v10M0 5h16" stroke="#c8102e" stroke-width="1.5"/><g fill="#fff"><circle cx="25" cy="7" r="1.3"/><circle cx="30" cy="13" r="1.1"/><circle cx="22" cy="17" r="1.1"/><circle cx="28" cy="20" r="1"/></g></svg>`,
+  egy:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="8" fill="#ce1126"/><rect y="8" width="36" height="8" fill="#fff"/><rect y="16" width="36" height="8" fill="#000"/><rect x="17" y="10" width="2" height="4" fill="#c09300"/></svg>`,
+  arg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="8" fill="#75aadb"/><rect y="8" width="36" height="8" fill="#fff"/><rect y="16" width="36" height="8" fill="#75aadb"/><circle cx="18" cy="12" r="2.2" fill="#f6b40e"/></svg>`,
+  cpv:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="24" fill="#003893"/><rect y="13" width="36" height="3" fill="#fff"/><rect y="16" width="36" height="2" fill="#cf2027"/><g fill="#f7d116"><circle cx="11" cy="8" r=".8"/><circle cx="8" cy="10" r=".8"/><circle cx="7" cy="14" r=".8"/><circle cx="10" cy="17" r=".8"/><circle cx="14" cy="17" r=".8"/><circle cx="17" cy="14" r=".8"/><circle cx="16" cy="10" r=".8"/></g></svg>`,
+  col:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="12" fill="#fcd116"/><rect y="12" width="36" height="6" fill="#003893"/><rect y="18" width="36" height="6" fill="#ce1126"/></svg>`,
+  gha:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24"><rect width="36" height="8" fill="#ce1126"/><rect y="8" width="36" height="8" fill="#fcd116"/><rect y="16" width="36" height="8" fill="#006b3f"/><path d="M18 8.5l1 2.8h3l-2.4 1.8.9 2.9-2.5-1.7-2.5 1.7.9-2.9-2.4-1.8h3z" fill="#000"/></svg>`
+};
+const FLAG_IMAGES = {};
+const FLAGS_READY = Promise.all(Object.entries(FLAG_SVG).map(([id, svg]) => new Promise(resolve => {
+  const img = new Image();
+  img.onload = () => resolve();
+  img.onerror = () => resolve();
+  img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  FLAG_IMAGES[id] = img;
+})));
+function flagMarkup(id){
+  if(!id || !FLAG_SVG[id]) return '<span class="flag-placeholder">·</span>';
+  return `<span class="flag-svg">${FLAG_SVG[id]}</span>`;
+}
+function drawFlagImage(ctx,id,x,y,w,h){
+  const img = FLAG_IMAGES[id];
+  if(img && img.complete && img.naturalWidth){
+    ctx.drawImage(img,x,y,w,h);
+    ctx.strokeStyle = 'rgba(15,23,42,.18)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x,y,w,h);
+  }else{
+    ctx.fillStyle = '#e5e7eb';
+    ctx.fillRect(x,y,w,h);
+    ctx.strokeStyle = 'rgba(15,23,42,.18)';
+    ctx.strokeRect(x,y,w,h);
+  }
+}
+
+// 按官方晋级线路重排，不按比赛日期排序。
+const MATCHES = {
+  m74:{stage:'32强', label:'M74', teams:['ger','par']},
+  m77:{stage:'32强', label:'M77', teams:['fra','swe']},
+  m73:{stage:'32强', label:'M73', teams:['rsa','can']},
+  m75:{stage:'32强', label:'M75', teams:['ned','mar']},
+  m83:{stage:'32强', label:'M83', teams:['por','cro']},
+  m84:{stage:'32强', label:'M84', teams:['esp','aut']},
+  m81:{stage:'32强', label:'M81', teams:['usa','bih']},
+  m82:{stage:'32强', label:'M82', teams:['bel','sen']},
+  m76:{stage:'32强', label:'M76', teams:['bra','jpn']},
+  m78:{stage:'32强', label:'M78', teams:['civ','nor']},
+  m79:{stage:'32强', label:'M79', teams:['mex','ecu']},
+  m80:{stage:'32强', label:'M80', teams:['eng','cod']},
+  m86:{stage:'32强', label:'M86', teams:['arg','cpv']},
+  m88:{stage:'32强', label:'M88', teams:['aus','egy']},
+  m85:{stage:'32强', label:'M85', teams:['sui','dza']},
+  m87:{stage:'32强', label:'M87', teams:['col','gha']},
+
+  r16a:{stage:'16强', label:'W74/W77', sources:['m74','m77']},
+  r16b:{stage:'16强', label:'W73/W75', sources:['m73','m75']},
+  r16c:{stage:'16强', label:'W83/W84', sources:['m83','m84']},
+  r16d:{stage:'16强', label:'W81/W82', sources:['m81','m82']},
+  r16e:{stage:'16强', label:'W76/W78', sources:['m76','m78']},
+  r16f:{stage:'16强', label:'W79/W80', sources:['m79','m80']},
+  r16g:{stage:'16强', label:'W86/W88', sources:['m86','m88']},
+  r16h:{stage:'16强', label:'W85/W87', sources:['m85','m87']},
+
+  qf1:{stage:'8强', label:'QF1', sources:['r16a','r16b']},
+  qf2:{stage:'8强', label:'QF2', sources:['r16c','r16d']},
+  qf3:{stage:'8强', label:'QF3', sources:['r16e','r16f']},
+  qf4:{stage:'8强', label:'QF4', sources:['r16g','r16h']},
+
+  sf1:{stage:'4强', label:'SF1 上半区', sources:['qf1','qf2']},
+  sf2:{stage:'4强', label:'SF2 下半区', sources:['qf3','qf4']},
+  final:{stage:'决赛', label:'Final', sources:['sf1','sf2']}
+};
+
+const ROUND_ORDER = {
+  r32:['m74','m77','m73','m75','m83','m84','m81','m82','m76','m78','m79','m80','m86','m88','m85','m87'],
+  r16:['r16a','r16b','r16c','r16d','r16e','r16f','r16g','r16h'],
+  qf:['qf1','qf2','qf3','qf4'],
+  sf:['sf1','sf2'],
+  final:['final']
+};
+
+const ROUND_TITLE = {r32:'32强', r16:'16强', qf:'8强', sf:'4强', final:'决赛', champ:'冠军'};
+const POS = {r32:80, r16:320, qf:560, sf:800, final:1040, champ:1290};
+const CARD_W = 180, CARD_H = 70;
+let picks = {};
+let positions = {};
+
+function teamLabel(id){
+  if(!id || !TEAM[id]) return {cn:'待定', flag:'·'};
+  return TEAM[id];
+}
+function participants(id){
+  const m = MATCHES[id];
+  if(m.teams) return m.teams;
+  return m.sources.map(src => picks[src] || null);
+}
+function normalizePicks(){
+  let changed = true;
+  while(changed){
+    changed = false;
+    for(const id of [...ROUND_ORDER.r16,...ROUND_ORDER.qf,...ROUND_ORDER.sf,...ROUND_ORDER.final]){
+      const ps = participants(id);
+      if(picks[id] && !ps.includes(picks[id])){
+        delete picks[id];
+        changed = true;
+      }
+    }
+  }
+}
+function selectTeam(matchId, teamId){
+  if(!teamId) return;
+  picks[matchId] = teamId;
+  normalizePicks();
+  render();
+}
+function calcPositions(){
+  positions = {};
+  const startY = 90, gap = 90;
+  ROUND_ORDER.r32.forEach((id,i)=>{positions[id] = {x:POS.r32, y:startY + i*gap};});
+  for(const round of ['r16','qf','sf','final']){
+    for(const id of ROUND_ORDER[round]){
+      const src = MATCHES[id].sources;
+      const centers = src.map(s => positions[s].y + CARD_H/2);
+      const cy = centers.reduce((a,b)=>a+b,0)/centers.length;
+      positions[id] = {x:POS[round], y:cy - CARD_H/2};
+    }
+  }
+  positions.champ = {x:POS.champ, y:positions.final.y - 14};
+}
+function render(){
+  normalizePicks();
+  calcPositions();
+  const board = document.getElementById('board');
+  [...board.querySelectorAll('.round-title,.match,.champion')].forEach(el=>el.remove());
+  drawLines();
+
+  for(const [key,x] of Object.entries(POS)){
+    const t = document.createElement('div');
+    t.className = 'round-title';
+    t.style.left = x + 'px';
+    t.textContent = ROUND_TITLE[key];
+    board.appendChild(t);
+  }
+
+  for(const round of ['r32','r16','qf','sf','final']){
+    for(const id of ROUND_ORDER[round]){
+      board.appendChild(makeCard(id));
+    }
+  }
+  board.appendChild(makeChampion());
+  updateName();
+}
+function makeCard(id){
+  const m = MATCHES[id];
+  const ps = participants(id);
+  const div = document.createElement('div');
+  div.className = 'match';
+  div.style.left = positions[id].x + 'px';
+  div.style.top = positions[id].y + 'px';
+  div.innerHTML = `<div class="match-label">${m.label} · ${m.stage}</div>`;
+  for(const tid of ps){
+    const info = teamLabel(tid);
+    const btn = document.createElement('button');
+    btn.className = 'team' + (picks[id] === tid ? ' selected' : '') + (!tid ? ' disabled' : '');
+    btn.type = 'button';
+    btn.innerHTML = `${flagMarkup(tid)}<span class="team-name">${info.cn}</span>`;
+    if(tid) btn.onclick = () => selectTeam(id, tid);
+    div.appendChild(btn);
+  }
+  return div;
+}
+function makeChampion(){
+  const champId = picks.final || null;
+  const info = teamLabel(champId);
+  const div = document.createElement('div');
+  div.className = 'champion';
+  div.style.left = positions.champ.x + 'px';
+  div.style.top = positions.champ.y + 'px';
+  div.innerHTML = `<div class="small">Champion</div><div class="big">${flagMarkup(champId)}<br>${info.cn}</div>`;
+  return div;
+}
+function drawLines(){
+  const svg = document.getElementById('lines');
+  svg.innerHTML = '';
+  function centerRight(id){return {x:positions[id].x + CARD_W, y:positions[id].y + CARD_H/2};}
+  function centerLeft(id){return {x:positions[id].x, y:positions[id].y + CARD_H/2};}
+  function addPath(d){
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d', d);
+    p.setAttribute('fill','none');
+    p.setAttribute('stroke','#a8b3c5');
+    p.setAttribute('stroke-width','2');
+    p.setAttribute('stroke-linecap','round');
+    svg.appendChild(p);
+  }
+  for(const id of [...ROUND_ORDER.r16,...ROUND_ORDER.qf,...ROUND_ORDER.sf,...ROUND_ORDER.final]){
+    const src = MATCHES[id].sources;
+    const target = centerLeft(id);
+    const midX = target.x - 28;
+    for(const s of src){
+      const from = centerRight(s);
+      addPath(`M ${from.x} ${from.y} H ${midX} V ${target.y} H ${target.x}`);
+    }
+  }
+  const f = centerRight('final');
+  const c = {x:positions.champ.x, y:positions.champ.y + 50};
+  addPath(`M ${f.x} ${f.y} H ${c.x}`);
+}
+function updateName(){
+  const name = document.getElementById('predictorName').value.trim() || '张三';
+  document.getElementById('previewName').textContent = name;
+}
+function reset(){
+  if(!confirm('确定清空当前选择吗？')) return;
+  picks = {};
+  render();
+}
+function save(){
+  const data = {name:document.getElementById('predictorName').value.trim(), picks};
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  alert('已保存。');
+}
+function load(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(!raw){alert('暂无保存记录。');return;}
+  try{
+    const data = JSON.parse(raw);
+    picks = data.picks || {};
+    document.getElementById('predictorName').value = data.name || '';
+    render();
+  }catch(e){alert('读取失败。');}
+}
+function exportJson(){
+  const data = {name:document.getElementById('predictorName').value.trim(), picks};
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (data.name || '张三') + '_世界杯预测.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importJson(file){
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const data = JSON.parse(e.target.result);
+      picks = data.picks || {};
+      document.getElementById('predictorName').value = data.name || '';
+      render();
+    }catch(err){alert('导入失败。');}
+  };
+  reader.readAsText(file,'utf-8');
+}
+
+function exportPng(){
+  normalizePicks();
+  calcPositions();
+  const scale = 2;
+  const width = 1540, height = 1760;
+  const canvas = document.getElementById('canvas');
+  canvas.width = width*scale;
+  canvas.height = height*scale;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale,scale);
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(0,0,width,height);
+  ctx.fillStyle = '#ffffff';
+  roundRect(ctx,20,20,width-40,height-40,22,true,false);
+  ctx.strokeStyle = '#d8e0eb';
+  ctx.lineWidth = 1;
+  roundRect(ctx,20,20,width-40,height-40,22,false,true);
+
+  const name = document.getElementById('predictorName').value.trim() || '张三';
+  ctx.fillStyle = '#111827';
+  ctx.font = 'bold 30px Microsoft YaHei, PingFang SC, Arial';
+  ctx.fillText('2026世界杯淘汰赛预测图', 44, 62);
+  ctx.fillStyle = '#6b7280';
+  ctx.font = '16px Microsoft YaHei, PingFang SC, Arial';
+  ctx.fillText('预测人：' + name, 44, 90);
+
+  // half divider
+  ctx.strokeStyle = '#dbe3ee'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(40,950); ctx.lineTo(width-40,950); ctx.stroke();
+  ctx.save();
+  ctx.fillStyle = '#64748b'; ctx.font = 'bold 15px Microsoft YaHei, PingFang SC, Arial';
+  ctx.translate(42,220); ctx.rotate(Math.PI/2); ctx.fillText('上半区',0,0); ctx.restore();
+  ctx.save();
+  ctx.fillStyle = '#64748b'; ctx.font = 'bold 15px Microsoft YaHei, PingFang SC, Arial';
+  ctx.translate(42,1150); ctx.rotate(Math.PI/2); ctx.fillText('下半区',0,0); ctx.restore();
+
+  // titles
+  ctx.fillStyle = '#334155';
+  ctx.font = 'bold 16px Microsoft YaHei, PingFang SC, Arial';
+  for(const [key,x] of Object.entries(POS)){
+    ctx.fillText(ROUND_TITLE[key], x+62, 125);
+  }
+
+  // lines first
+  function cRight(id){return {x:positions[id].x + CARD_W, y:positions[id].y + 150 + CARD_H/2};}
+  function cLeft(id){return {x:positions[id].x, y:positions[id].y + 150 + CARD_H/2};}
+  ctx.strokeStyle = '#a8b3c5'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+  for(const id of [...ROUND_ORDER.r16,...ROUND_ORDER.qf,...ROUND_ORDER.sf,...ROUND_ORDER.final]){
+    const target = cLeft(id); const midX = target.x - 28;
+    for(const s of MATCHES[id].sources){
+      const from = cRight(s);
+      ctx.beginPath(); ctx.moveTo(from.x,from.y); ctx.lineTo(midX,from.y); ctx.lineTo(midX,target.y); ctx.lineTo(target.x,target.y); ctx.stroke();
+    }
+  }
+  const f = cRight('final');
+  ctx.beginPath(); ctx.moveTo(f.x,f.y); ctx.lineTo(positions.champ.x, positions.champ.y + 150 + 50); ctx.stroke();
+
+  // cards
+  for(const round of ['r32','r16','qf','sf','final']){
+    for(const id of ROUND_ORDER[round]) drawCard(ctx,id,positions[id].x,positions[id].y+150);
+  }
+  drawChampion(ctx,positions.champ.x,positions.champ.y+150);
+
+  const a = document.createElement('a');
+  a.download = name + '_世界杯淘汰赛预测图.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+function drawCard(ctx,id,x,y){
+  const m = MATCHES[id];
+  const ps = participants(id);
+  ctx.fillStyle = '#ffffff';
+  roundRect(ctx,x,y,CARD_W,CARD_H,12,true,false);
+  ctx.strokeStyle = '#d8e0eb'; ctx.lineWidth = 1;
+  roundRect(ctx,x,y,CARD_W,CARD_H,12,false,true);
+  ctx.fillStyle = '#64748b'; ctx.font = 'bold 10px Microsoft YaHei, PingFang SC, Arial';
+  ctx.fillText(m.label + ' · ' + m.stage, x+8, y+15);
+  ps.forEach((tid,i)=>drawTeam(ctx,tid,x+7,y+22+i*29,CARD_W-14,25,picks[id]===tid));
+}
+function drawTeam(ctx,tid,x,y,w,h,sel){
+  const info = teamLabel(tid);
+  ctx.fillStyle = sel ? '#dcfce7' : '#ffffff';
+  ctx.strokeStyle = sel ? '#22c55e' : '#e2e8f0';
+  ctx.lineWidth = 1;
+  roundRect(ctx,x,y,w,h,8,true,true);
+  ctx.fillStyle = tid ? '#111827' : '#94a3b8';
+  ctx.font = (sel ? 'bold ' : '') + '13px Microsoft YaHei, PingFang SC, Arial, sans-serif';
+  drawFlagImage(ctx, tid, x+7, y+5, 24, 15);
+  ctx.fillText(fitText(ctx, info.cn, w-42), x+38, y+17);
+}
+function drawChampion(ctx,x,y){
+  const info = teamLabel(picks.final || null);
+  ctx.fillStyle = '#fffbeb'; ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 2;
+  roundRect(ctx,x,y,190,100,16,true,true);
+  ctx.fillStyle = '#92400e';
+  ctx.font = 'bold 13px Microsoft YaHei, PingFang SC, Arial';
+  ctx.fillText('Champion', x+62, y+27);
+  ctx.font = 'bold 24px Microsoft YaHei, PingFang SC, Arial';
+  drawFlagImage(ctx, picks.final || null, x+73, y+42, 44, 29);
+  ctx.font = 'bold 18px Microsoft YaHei, PingFang SC, Arial';
+  ctx.fillText(fitText(ctx, info.cn, 150), x+20, y+86);
+}
+function fitText(ctx,text,maxW){
+  text = String(text || '');
+  if(ctx.measureText(text).width <= maxW) return text;
+  let t = text;
+  while(t && ctx.measureText(t+'…').width > maxW) t = t.slice(0,-1);
+  return t + '…';
+}
+function roundRect(ctx,x,y,w,h,r,fill,stroke){
+  ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r); ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath(); if(fill)ctx.fill(); if(stroke)ctx.stroke();
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('predictorName').addEventListener('input',updateName);
+  document.getElementById('exportBtn').addEventListener('click',exportPng);
+  document.getElementById('saveBtn').addEventListener('click',save);
+  document.getElementById('loadBtn').addEventListener('click',load);
+  document.getElementById('resetBtn').addEventListener('click',reset);
+  document.getElementById('jsonBtn').addEventListener('click',exportJson);
+  document.getElementById('jsonInput').addEventListener('change',e=>{if(e.target.files[0]) importJson(e.target.files[0]); e.target.value='';});
+  render();
+});
+</script>
+</body>
+</html>
