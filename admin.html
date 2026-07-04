@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>世界杯预测管理员排名页</title>
+<style>
+:root{--bg:#f3f6fb;--card:#fff;--text:#172033;--muted:#64748b;--line:#d8e0eb;--accent:#2563eb;--green:#16a34a;--red:#dc2626;--gold:#f59e0b;--shadow:0 10px 28px rgba(15,23,42,.08)}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#eef4ff 0%,#f8fafc 100%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",Arial,sans-serif}.page{max-width:1280px;margin:0 auto;padding:22px}.card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:16px 18px;margin-bottom:16px}h1{font-size:28px;margin:0 0 6px}.sub{font-size:14px;color:var(--muted);line-height:1.7}.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.btn{height:38px;border:0;border-radius:10px;padding:0 14px;background:var(--accent);color:white;font-weight:800;cursor:pointer}.btn.secondary{background:#e5e7eb;color:#111827}.btn.ghost{background:#fff;color:#111827;border:1px solid var(--line)}.btn.warn{background:#f59e0b}.btn.red{background:#ef4444}.btn:active{transform:translateY(1px)}.hidden{display:none!important}.pill{display:inline-flex;align-items:center;gap:6px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;border-radius:999px;padding:7px 10px;font-size:13px;font-weight:800}.pill.gray{background:#f8fafc;border-color:#e2e8f0;color:#475569}.pill.green{background:#dcfce7;border-color:#86efac;color:#166534}.section-title{font-size:18px;font-weight:900;margin:0 0 12px}.grid{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:12px}.match-box{border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px}.match-box.locked{background:#f8fafc;color:#94a3b8}.match-label{font-size:13px;font-weight:900;margin-bottom:8px;color:#334155}.teams{font-size:13px;color:#64748b;line-height:1.5;margin-bottom:8px}.select{width:100%;height:36px;border:1px solid var(--line);border-radius:9px;padding:0 10px;background:#fff;font-size:14px}.hint{font-size:13px;color:#64748b;line-height:1.7}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}table{border-collapse:collapse;width:100%;min-width:980px;background:#fff}th,td{border-bottom:1px solid #e5eaf2;padding:10px 9px;text-align:center;font-size:14px;white-space:nowrap}th{background:#f8fafc;font-size:13px;color:#475569;font-weight:900;position:sticky;top:0}td.name{text-align:left;font-weight:900}.rank1{background:#fffbeb}.rank2{background:#f8fafc}.rank3{background:#fff7ed}.score{font-weight:900;color:#166534}.bad{color:#dc2626}.small{font-size:12px;color:#64748b}.footer-note{font-size:13px;color:#64748b;line-height:1.7}.file-like{display:inline-flex;align-items:center;cursor:pointer}.textarea{width:100%;height:120px;border:1px solid var(--line);border-radius:12px;padding:10px;font-size:13px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.mobile-note{display:none}@media(max-width:900px){.page{padding:12px}.grid{grid-template-columns:1fr}.mobile-note{display:block}.card{padding:14px}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="card">
+    <h1>世界杯预测管理员排名页</h1>
+    <div class="sub">用于汇总同学导出的 JSON，手动录入真实赛果，然后自动算排名。数据默认记在你当前浏览器里，不会上传到服务器。</div>
+    <div class="row" style="margin-top:12px;">
+      <label class="btn file-like">批量导入同学JSON<input id="importFiles" class="hidden" type="file" accept="application/json" multiple></label>
+      <button class="btn secondary" id="saveBtn">保存管理员数据</button>
+      <button class="btn secondary" id="loadBtn">读取管理员数据</button>
+      <button class="btn ghost" id="exportBackupBtn">导出管理员备份</button>
+      <label class="btn ghost file-like">导入管理员备份<input id="backupInput" class="hidden" type="file" accept="application/json"></label>
+      <button class="btn ghost" id="exportCsvBtn">导出CSV</button>
+      <button class="btn ghost" id="exportPngBtn">导出排名PNG</button>
+      <button class="btn red" id="clearBtn">清空全部</button>
+    </div>
+    <div class="row" style="margin-top:12px;">
+      <label class="pill gray"><input id="dedupe" type="checkbox" checked> 同名覆盖旧预测</label>
+      <span class="pill green">已导入：<span id="countText">0</span> 人</span>
+      <span class="pill">当前满分：<span id="maxText">0</span> 分</span>
+      <span class="pill gray">上次保存：<span id="savedText">未保存</span></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">真实赛果录入</div>
+    <div class="hint" style="margin-bottom:12px;">先填 1/8 决赛，1/4、半决赛、决赛和季军战会根据上一轮真实胜者自动解锁。这里是你手工更新赛果的地方。</div>
+    <div id="resultsArea"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">排名</div>
+    <div class="hint" id="emptyHint">还没有导入同学 JSON。请先点击“批量导入同学JSON”。</div>
+    <div class="table-wrap hidden" id="tableWrap">
+      <table id="rankTable"></table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-title">使用说明</div>
+    <div class="footer-note">
+      1）同学在预测网页里填写姓名并导出 JSON，然后发给你。<br>
+      2）你在本页批量导入 JSON。<br>
+      3）比赛结束后，你在“真实赛果录入”里选真实胜者。<br>
+      4）排名会自动更新，可以导出 CSV 或 PNG。<br>
+      5）记忆功能只是本机浏览器 localStorage，不是云端数据库；换电脑前请先“导出管理员备份”。
+    </div>
+  </div>
+  <canvas id="canvas" class="hidden"></canvas>
+</div>
+
+<script>
+const ADMIN_STORAGE_KEY='wc2026_admin_ranking_local_v1';
+const TEAM={
+  can:{cn:'加拿大',code:'CAN'}, mar:{cn:'摩洛哥',code:'MAR'}, par:{cn:'巴拉圭',code:'PAR'}, fra:{cn:'法国',code:'FRA'},
+  por:{cn:'葡萄牙',code:'POR'}, esp:{cn:'西班牙',code:'ESP'}, usa:{cn:'美国',code:'USA'}, bel:{cn:'比利时',code:'BEL'},
+  bra:{cn:'巴西',code:'BRA'}, nor:{cn:'挪威',code:'NOR'}, mex:{cn:'墨西哥',code:'MEX'}, eng:{cn:'英格兰',code:'ENG'},
+  arg:{cn:'阿根廷',code:'ARG'}, egy:{cn:'埃及',code:'EGY'}, sui:{cn:'瑞士',code:'SUI'}, col:{cn:'哥伦比亚',code:'COL'}
+};
+const MATCHES={
+  r16a:{stage:'1/8',label:'R16-1',teams:['can','mar']},
+  r16b:{stage:'1/8',label:'R16-2',teams:['par','fra']},
+  r16c:{stage:'1/8',label:'R16-3',teams:['por','esp']},
+  r16d:{stage:'1/8',label:'R16-4',teams:['usa','bel']},
+  r16e:{stage:'1/8',label:'R16-5',teams:['bra','nor']},
+  r16f:{stage:'1/8',label:'R16-6',teams:['mex','eng']},
+  r16g:{stage:'1/8',label:'R16-7',teams:['arg','egy']},
+  r16h:{stage:'1/8',label:'R16-8',teams:['sui','col']},
+  qf1:{stage:'1/4',label:'QF-1',sources:['r16a','r16b']},
+  qf2:{stage:'1/4',label:'QF-2',sources:['r16c','r16d']},
+  qf3:{stage:'1/4',label:'QF-3',sources:['r16e','r16f']},
+  qf4:{stage:'1/4',label:'QF-4',sources:['r16g','r16h']},
+  sf1:{stage:'半决赛',label:'SF-1',sources:['qf1','qf2']},
+  sf2:{stage:'半决赛',label:'SF-2',sources:['qf3','qf4']},
+  final:{stage:'决赛',label:'Final',sources:['sf1','sf2']},
+  third:{stage:'季军战',label:'Third',thirdSources:['sf1','sf2']}
+};
+const GROUPS=[
+  {title:'1/8决赛',ids:['r16a','r16b','r16c','r16d','r16e','r16f','r16g','r16h']},
+  {title:'1/4决赛',ids:['qf1','qf2','qf3','qf4']},
+  {title:'半决赛',ids:['sf1','sf2']},
+  {title:'决赛 / 季军战',ids:['final','third']}
+];
+const SCORE_GROUPS={r16:['r16a','r16b','r16c','r16d','r16e','r16f','r16g','r16h'],qf:['qf1','qf2','qf3','qf4'],sf:['sf1','sf2'],final:['final'],third:['third']};
+let entries=[]; // {name,picks,file,importedAt}
+let results={}; // matchId -> teamId
+
+function t(id){return TEAM[id]||{cn:'待定',code:'TBD'}}
+function teamText(id){const x=t(id);return id?`${x.cn}`:'待定'}
+function teamFull(id){const x=t(id);return id?`${x.cn} (${x.code})`:'待定'}
+function participants(id){
+  const m=MATCHES[id];
+  if(m.teams)return m.teams;
+  if(m.sources)return m.sources.map(s=>results[s]||null);
+  if(m.thirdSources)return m.thirdSources.map(s=>loserOf(s));
+  return [null,null];
+}
+function loserOf(id){
+  const ps=participants(id);
+  const win=results[id];
+  if(!win||!ps[0]||!ps[1])return null;
+  return ps[0]===win?ps[1]:ps[0];
+}
+function normalizeResults(){
+  for(const id of Object.keys(MATCHES)){
+    const ps=participants(id).filter(Boolean);
+    if(results[id] && !ps.includes(results[id])) delete results[id];
+  }
+}
+function setResult(id,val){
+  if(val) results[id]=val; else delete results[id];
+  normalizeResults();
+  autoSave();
+  render();
+}
+function renderResults(){
+  normalizeResults();
+  const area=document.getElementById('resultsArea');area.innerHTML='';
+  for(const g of GROUPS){
+    const title=document.createElement('div');title.className='section-title';title.style.fontSize='15px';title.style.marginTop='10px';title.textContent=g.title;area.appendChild(title);
+    const grid=document.createElement('div');grid.className='grid';
+    for(const id of g.ids){
+      const m=MATCHES[id];
+      const ps=participants(id);
+      const ready=ps[0]&&ps[1];
+      const box=document.createElement('div');box.className='match-box'+(ready?'':' locked');
+      box.innerHTML=`<div class="match-label">${m.label} · ${m.stage}</div><div class="teams">${teamText(ps[0])} vs ${teamText(ps[1])}</div>`;
+      const sel=document.createElement('select');sel.className='select';sel.disabled=!ready;sel.innerHTML='<option value="">未录入真实胜者</option>';
+      if(ready){
+        for(const p of ps){
+          const op=document.createElement('option');op.value=p;op.textContent=teamFull(p);if(results[id]===p)op.selected=true;sel.appendChild(op);
+        }
+      }
+      sel.onchange=()=>setResult(id,sel.value);
+      box.appendChild(sel);grid.appendChild(box);
+    }
+    area.appendChild(grid);
+  }
+}
+function scoreEntry(e){
+  const s={r16:0,qf:0,sf:0,final:0,third:0,total:0};
+  for(const [k,ids] of Object.entries(SCORE_GROUPS)){
+    for(const id of ids){ if(results[id] && e.picks && e.picks[id]===results[id]) s[k]++; }
+    s.total+=s[k];
+  }
+  return s;
+}
+function maxScore(){let n=0;for(const ids of Object.values(SCORE_GROUPS))for(const id of ids)if(results[id])n++;return n;}
+function sortRanked(){
+  return entries.map((e,i)=>({...e,_idx:i,score:scoreEntry(e)})).sort((a,b)=>b.score.total-a.score.total||b.score.r16-a.score.r16||b.score.qf-a.score.qf||a.name.localeCompare(b.name,'zh'));
+}
+function renderRanking(){
+  document.getElementById('countText').textContent=entries.length;
+  document.getElementById('maxText').textContent=maxScore();
+  const table=document.getElementById('rankTable');const wrap=document.getElementById('tableWrap');const hint=document.getElementById('emptyHint');
+  if(!entries.length){wrap.classList.add('hidden');hint.classList.remove('hidden');return;}
+  wrap.classList.remove('hidden');hint.classList.add('hidden');
+  const ranked=sortRanked();
+  let html='<thead><tr><th>排名</th><th>姓名</th><th>总分</th><th>1/8</th><th>1/4</th><th>半决赛</th><th>决赛</th><th>季军战</th><th>冠军预测</th><th>季军预测</th><th>导入文件</th></tr></thead><tbody>';
+  let lastScore=null,lastRank=0;
+  ranked.forEach((e,i)=>{
+    const total=e.score.total;
+    const rank=(lastScore===total)?lastRank:i+1;lastScore=total;lastRank=rank;
+    const cls=rank===1?'rank1':rank===2?'rank2':rank===3?'rank3':'';
+    html+=`<tr class="${cls}"><td>${rank}</td><td class="name">${escapeHtml(e.name)}</td><td class="score">${total}</td><td>${e.score.r16}</td><td>${e.score.qf}</td><td>${e.score.sf}</td><td>${e.score.final}</td><td>${e.score.third}</td><td>${teamText(e.picks?.final)}</td><td>${teamText(e.picks?.third)}</td><td class="small">${escapeHtml(e.file||'')}</td></tr>`;
+  });
+  html+='</tbody>';table.innerHTML=html;
+}
+function render(){renderResults();renderRanking();}
+function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function readFileText(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsText(file,'utf-8');});}
+async function importStudentFiles(files){
+  const dedupe=document.getElementById('dedupe').checked;
+  let ok=0,bad=[];
+  for(const file of files){
+    try{
+      const raw=await readFileText(file);const o=JSON.parse(raw);
+      const picks=o.picks||o.predictions||{};
+      let name=(o.name||o.predictorName||'').trim();
+      if(!name) name=file.name.replace(/\.json$/i,'').replace(/_1-8预测$/,'')||'未命名';
+      const entry={name,picks,file:file.name,importedAt:new Date().toLocaleString()};
+      if(dedupe){const idx=entries.findIndex(e=>e.name===name);if(idx>=0)entries[idx]=entry;else entries.push(entry);}else entries.push(entry);
+      ok++;
+    }catch(e){bad.push(file.name);}
+  }
+  autoSave();render();
+  alert(`导入完成：成功 ${ok} 个${bad.length?`，失败 ${bad.length} 个：\n${bad.join('\n')}`:''}`);
+}
+function dataObj(){return{version:'wc2026-admin-v1',entries,results,savedAt:new Date().toLocaleString()};}
+function save(){localStorage.setItem(ADMIN_STORAGE_KEY,JSON.stringify(dataObj()));document.getElementById('savedText').textContent=new Date().toLocaleString();alert('已保存到本机浏览器。');}
+function autoSave(){localStorage.setItem(ADMIN_STORAGE_KEY,JSON.stringify(dataObj()));document.getElementById('savedText').textContent=new Date().toLocaleString();}
+function load(){
+  const raw=localStorage.getItem(ADMIN_STORAGE_KEY);if(!raw){alert('没有保存记录。');return;}
+  try{const o=JSON.parse(raw);entries=o.entries||[];results=o.results||{};document.getElementById('savedText').textContent=o.savedAt||'已读取';render();}
+  catch(e){alert('读取失败。');}
+}
+function clearAll(){if(!confirm('确定清空全部导入预测和赛果吗？'))return;entries=[];results={};autoSave();render();}
+function downloadText(filename,text,type='text/plain;charset=utf-8'){
+  const blob=new Blob([text],{type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href);
+}
+function exportBackup(){downloadText('世界杯预测管理员备份.json',JSON.stringify(dataObj(),null,2),'application/json;charset=utf-8');}
+async function importBackup(file){
+  try{const raw=await readFileText(file);const o=JSON.parse(raw);entries=o.entries||[];results=o.results||{};autoSave();render();alert('管理员备份已导入。');}
+  catch(e){alert('备份文件格式不对。');}
+}
+function csvCell(v){v=String(v??'');return '"'+v.replace(/"/g,'""')+'"';}
+function exportCsv(){
+  const ranked=sortRanked();
+  const rows=[['排名','姓名','总分','1/8','1/4','半决赛','决赛','季军战','冠军预测','季军预测','导入文件']];
+  let lastScore=null,lastRank=0;
+  ranked.forEach((e,i)=>{const total=e.score.total;const rank=(lastScore===total)?lastRank:i+1;lastScore=total;lastRank=rank;rows.push([rank,e.name,total,e.score.r16,e.score.qf,e.score.sf,e.score.final,e.score.third,teamText(e.picks?.final),teamText(e.picks?.third),e.file||'']);});
+  downloadText('世界杯预测排名.csv','\ufeff'+rows.map(r=>r.map(csvCell).join(',')).join('\n'),'text/csv;charset=utf-8');
+}
+function exportRankingPng(){
+  const ranked=sortRanked();if(!ranked.length){alert('还没有导入预测。');return;}
+  const canvas=document.getElementById('canvas');const scale=2;const width=1100;const rowH=36;const height=Math.max(360,150+rowH*(ranked.length+1)+40);
+  canvas.width=width*scale;canvas.height=height*scale;const ctx=canvas.getContext('2d');ctx.setTransform(scale,0,0,scale,0,0);
+  ctx.fillStyle='#f8fafc';ctx.fillRect(0,0,width,height);ctx.fillStyle='#fff';round(ctx,24,24,width-48,height-48,18,true,false);ctx.strokeStyle='#d8e0eb';round(ctx,24,24,width-48,height-48,18,false,true);
+  ctx.fillStyle='#111827';ctx.font='bold 28px Microsoft YaHei, Arial';ctx.fillText('世界杯预测排名',48,68);
+  ctx.fillStyle='#64748b';ctx.font='15px Microsoft YaHei, Arial';ctx.fillText(`当前满分：${maxScore()} 分   生成时间：${new Date().toLocaleString()}`,48,96);
+  const headers=['排名','姓名','总分','1/8','1/4','半决赛','决赛','季军','冠军预测','季军预测'];
+  const xs=[55,125,285,355,425,500,590,660,750,900];
+  let y=132;ctx.fillStyle='#eff6ff';round(ctx,45,y-24,1010,34,8,true,false);ctx.fillStyle='#334155';ctx.font='bold 14px Microsoft YaHei, Arial';headers.forEach((h,i)=>ctx.fillText(h,xs[i],y-2));
+  let lastScore=null,lastRank=0;
+  ranked.forEach((e,i)=>{const total=e.score.total;const rank=(lastScore===total)?lastRank:i+1;lastScore=total;lastRank=rank;y+=rowH;if(rank===1){ctx.fillStyle='#fffbeb';ctx.fillRect(45,y-24,1010,32);}ctx.fillStyle='#111827';ctx.font='14px Microsoft YaHei, Arial';ctx.fillText(String(rank),xs[0],y-3);ctx.font='bold 14px Microsoft YaHei, Arial';ctx.fillText(fit(ctx,e.name,135),xs[1],y-3);ctx.fillStyle='#166534';ctx.fillText(String(total),xs[2],y-3);ctx.fillStyle='#111827';ctx.font='14px Microsoft YaHei, Arial';ctx.fillText(String(e.score.r16),xs[3],y-3);ctx.fillText(String(e.score.qf),xs[4],y-3);ctx.fillText(String(e.score.sf),xs[5],y-3);ctx.fillText(String(e.score.final),xs[6],y-3);ctx.fillText(String(e.score.third),xs[7],y-3);ctx.fillText(fit(ctx,teamText(e.picks?.final),120),xs[8],y-3);ctx.fillText(fit(ctx,teamText(e.picks?.third),120),xs[9],y-3);ctx.strokeStyle='#e5eaf2';ctx.beginPath();ctx.moveTo(45,y+10);ctx.lineTo(1055,y+10);ctx.stroke();});
+  const a=document.createElement('a');a.download='世界杯预测排名.png';a.href=canvas.toDataURL('image/png');a.click();
+}
+function round(ctx,x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();if(fill)ctx.fill();if(stroke)ctx.stroke();}
+function fit(ctx,text,max){text=String(text||'');if(ctx.measureText(text).width<=max)return text;let t=text;while(t&&ctx.measureText(t+'…').width>max)t=t.slice(0,-1);return t+'…'}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('importFiles').addEventListener('change',e=>{if(e.target.files.length)importStudentFiles(e.target.files);e.target.value='';});
+  document.getElementById('backupInput').addEventListener('change',e=>{if(e.target.files[0])importBackup(e.target.files[0]);e.target.value='';});
+  document.getElementById('saveBtn').addEventListener('click',save);
+  document.getElementById('loadBtn').addEventListener('click',load);
+  document.getElementById('clearBtn').addEventListener('click',clearAll);
+  document.getElementById('exportBackupBtn').addEventListener('click',exportBackup);
+  document.getElementById('exportCsvBtn').addEventListener('click',exportCsv);
+  document.getElementById('exportPngBtn').addEventListener('click',exportRankingPng);
+  const raw=localStorage.getItem(ADMIN_STORAGE_KEY);
+  if(raw){try{const o=JSON.parse(raw);entries=o.entries||[];results=o.results||{};document.getElementById('savedText').textContent=o.savedAt||'已自动读取';}catch(e){}}
+  render();
+});
+</script>
+</body>
+</html>
